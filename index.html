@@ -3,465 +3,410 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Job Seeker Wizard</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Job Application: Senior Product Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
         }
-        .wizard-overlay {
-            position: fixed;
+        .wizard-step {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+        .wizard-step.hidden {
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: none; /* Hidden by default */
-            align-items: center;
-            justify-content: center;
-            z-index: 50;
         }
-        .loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3b82f6;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out forwards;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .checkmark {
+            stroke-dasharray: 100;
+            stroke-dashoffset: 100;
+            animation: draw 0.5s forwards 0.5s;
+        }
+        @keyframes draw {
+            to { stroke-dashoffset: 0; }
+        }
+        /* Custom radio button styles */
+        .custom-radio input[type="radio"] {
+            display: none;
+        }
+        .custom-radio label {
+            cursor: pointer;
+            padding: 0.75rem 1.5rem;
+            border: 1px solid #D1D5DB;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            text-align: center;
+            width: 100px;
+        }
+        .custom-radio input[type="radio"]:checked + label {
+            background-color: #4F46E5;
+            color: white;
+            border-color: #4F46E5;
+        }
+        .custom-radio input[type="radio"]:hover:not(:checked) + label {
+            border-color: #4F46E5;
+        }
+        /* Modal transitions */
+        .modal-enter {
+            opacity: 0;
+        }
+        .modal-enter-active {
+            opacity: 1;
+            transition: opacity 300ms;
+        }
+        .modal-leave {
+            opacity: 1;
+        }
+        .modal-leave-active {
+            opacity: 0;
+            transition: opacity 300ms;
+        }
+        .modal-content-enter {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        .modal-content-enter-active {
+            opacity: 1;
+            transform: scale(1);
+            transition: all 300ms;
+        }
+        .modal-content-leave {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .modal-content-leave-active {
+            opacity: 0;
+            transform: scale(0.95);
+            transition: all 300ms;
         }
     </style>
 </head>
-<body class="bg-gray-100">
-
-    <!-- Job Description Page Content (Background) -->
-    <div id="job-description-container" class="container p-8 lg:p-16">
-        <h1 class="text-4xl sm:text-5xl font-bold text-gray-800 mb-2">Product Manager</h1>
-        <p class="text-lg text-gray-600 mb-6">
-            <span class="font-medium text-gray-700">Innovate Inc.</span> &bull; San Francisco, CA
-        </p>
-
-        <div class="bg-white rounded-2xl shadow-lg p-6 sm:p-8 lg:p-12">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Job Summary</h2>
-            <p id="job-description-text" class="text-gray-700 leading-relaxed mb-6">
-                We are looking for a passionate and experienced Product Manager to join our team in San Francisco. In this role, you will be responsible for the full product lifecycle, from ideation to launch and beyond. You will work closely with engineering, design, and marketing teams to build products that delight our customers and drive business growth.
-            </p>
-
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Key Responsibilities</h2>
-            <ul class="list-disc list-inside space-y-2 text-gray-700 mb-6">
-                <li>Define and articulate the product vision and strategy.</li>
-                <li>Conduct market research and competitive analysis.</li>
-                <li>Collaborate with cross-functional teams to deliver on the product roadmap.</li>
-                <li>Prioritize product features and enhancements.</li>
-                <li>Analyze product performance and user feedback.</li>
-            </ul>
-
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Qualifications</h2>
-            <ul class="list-disc list-inside space-y-2 text-gray-700 mb-6">
-                <li>5+ years of experience in product management.</li>
-                <li>Proven track record of managing all aspects of a successful product throughout its lifecycle.</li>
-                <li>Strong understanding of agile methodologies.</li>
-                <li>Excellent communication and leadership skills.</li>
-                <li>Bachelor's degree in a relevant field; MBA is a plus.</li>
-            </ul>
-
-            <div class="mt-8 flex justify-center">
-                <button id="show-wizard-btn" class="bg-blue-600 text-white font-semibold py-3 px-8 rounded-xl hover:bg-blue-700 transition-colors transform active:scale-95 shadow-md">
-                    Apply Now
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Wizard Overlay -->
-    <div id="wizard-overlay" class="wizard-overlay">
-        <div id="wizard-container" class="relative bg-white rounded-3xl shadow-2xl p-6 sm:p-8 lg:p-12 w-11/12 max-w-2xl">
-            <!-- Close Button -->
-            <button id="close-wizard-btn" class="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 transition-colors rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-            
-            <!-- Step 1: Welcome and Resume Upload -->
-            <div id="step-1" class="transition-all duration-500 ease-in-out">
-                <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Welcome, nice to meet you.</h1>
-                <p class="text-lg text-gray-600 mb-8">
-                    This **Product Manager** job is a great opportunity, and we would love to have you apply for it. Can you share your resume and let's get started?
+<body class="bg-gray-50">
+    
+    <!-- Job Description Background Page -->
+    <div class="container mx-auto p-4 sm:p-6 md:p-8">
+        <header class="mb-8 border-b pb-4">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Senior Product Manager</h1>
+            <p class="mt-2 text-lg text-gray-600">Ambler, PA · Full-time · Product Management</p>
+        </header>
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 bg-white p-6 md:p-8 rounded-xl shadow-sm border">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Job Description</h2>
+                <p class="text-gray-700 mb-4 leading-relaxed">
+                    We are seeking a talented and experienced Senior Product Manager to join our dynamic team. You will be responsible for the product planning and execution throughout the Product Lifecycle, including: gathering and prioritizing product and customer requirements, defining the product vision, and working closely with engineering, sales, marketing, and support to ensure revenue and customer satisfaction goals are met.
                 </p>
-                <div class="space-y-4">
-                    <label for="resume-upload" class="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-8 cursor-pointer hover:bg-gray-50 transition-colors">
-                        <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                <h3 class="text-xl font-semibold text-gray-800 mt-6 mb-3">Responsibilities:</h3>
+                <ul class="list-disc list-inside text-gray-700 space-y-2">
+                    <li>Define the product strategy and roadmap.</li>
+                    <li>Deliver MRDs and PRDs with prioritized features and corresponding justification.</li>
+                    <li>Work with external third parties to assess partnerships and licensing opportunities.</li>
+                    <li>Be an expert with respect to the competition.</li>
+                    <li>Act as a leader within the company.</li>
+                </ul>
+                 <h3 class="text-xl font-semibold text-gray-800 mt-6 mb-3">Qualifications:</h3>
+                <ul class="list-disc list-inside text-gray-700 space-y-2">
+                    <li>Minimum of 5 years experience as a Product Manager.</li>
+                    <li>Demonstrated success defining and launching excellent products.</li>
+                    <li>Excellent written and verbal communication skills.</li>
+                    <li>Bachelor’s degree (MBA preferred).</li>
+                </ul>
+            </div>
+            <aside class="lg:col-span-1">
+                 <div class="bg-white p-6 rounded-xl shadow-sm border sticky top-8">
+                     <h3 class="text-xl font-semibold text-gray-800 mb-4">Ready to Apply?</h3>
+                     <p class="text-gray-600 mb-6">Click the button below to start our quick and easy application process.</p>
+                     <button id="open-wizard-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition duration-300 text-lg shadow-sm hover:shadow-md transform hover:-translate-y-0.5">
+                        Apply Now
+                    </button>
+                 </div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Modal Overlay and Wizard -->
+    <div id="wizard-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50">
+        <div class="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-8 md:p-12 relative overflow-y-auto max-h-[95vh]">
+            <button id="close-wizard-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <div class="space-y-6 relative min-h-[400px]">
+                <!-- Step 1: Welcome & Resume Upload -->
+                <div id="step-1" class="wizard-step">
+                    <div class="text-center">
+                        <svg class="w-16 h-16 mx-auto text-indigo-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Welcome! Nice to meet you.</h1>
+                        <p class="mt-3 text-gray-600">This <span class="font-semibold text-indigo-700">Senior Product Manager</span> job in <span class="font-semibold text-indigo-700">Ambler, PA</span> is a great opportunity. We'd love to have you apply!</p>
+                    </div>
+                    <div class="mt-8">
+                        <label for="resume-upload" class="block text-sm font-medium text-gray-700 mb-2">Let's get started by sharing your resume.</label>
+                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                            <div class="space-y-1 text-center">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <div class="flex text-sm text-gray-600">
+                                    <label for="resume-file" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                        <span>Upload a file</span>
+                                        <input id="resume-file" name="resume-file" type="file" class="sr-only">
+                                    </label>
+                                    <p class="pl-1">or drag and drop</p>
+                                </div>
+                                <p class="text-xs text-gray-500">PDF, DOCX up to 10MB</p>
+                            </div>
+                        </div>
+                        <div id="file-upload-name" class="mt-2 text-sm text-center text-gray-500 h-5"></div>
+                        <button id="submit-resume-btn" class="mt-6 w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 transition duration-300 disabled:bg-indigo-300 disabled:cursor-not-allowed" disabled>
+                            Let's Go
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2: LinkedIn Confirmation -->
+                <div id="step-2" class="wizard-step hidden">
+                     <!-- Content remains the same -->
+                </div>
+
+                <!-- Step 3: Mandatory Questions -->
+                <div id="step-3" class="wizard-step hidden">
+                     <!-- Content remains the same -->
+                </div>
+
+                <!-- Step 4: Information Hub & Submit -->
+                <div id="step-4" class="wizard-step hidden">
+                     <!-- Content remains the same -->
+                </div>
+
+                <!-- Step 5: Post-Application Subscriptions -->
+                <div id="step-5" class="wizard-step hidden">
+                    <div class="text-center">
+                        <svg class="w-20 h-20 mx-auto mb-4 text-green-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <circle cx="12" cy="12" r="10" fill="currentColor" fill-opacity="0.1"/>
+                          <path class="checkmark" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M8.5 12.5l2 2 5-5"/>
                         </svg>
-                        <p class="mt-2 text-sm text-gray-500">Drag & drop your resume or click to upload</p>
-                        <input id="resume-upload" type="file" class="hidden">
-                    </label>
-                    <button id="next-1" class="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-xl hover:bg-blue-700 transition-colors transform active:scale-95">
-                        Let's Get Started
-                    </button>
-                </div>
-            </div>
-
-            <!-- Step 2: Compatibility Check & Interview Prep -->
-            <div id="step-2" class="hidden transition-all duration-500 ease-in-out">
-                <h2 class="text-3xl font-bold text-gray-800 mb-4 flex items-center">
-                    <span class="mr-2">Job Compatibility Analysis</span> ✨
-                </h2>
-                <div id="gemini-content" class="min-h-[100px] flex items-center justify-center p-6 bg-gray-50 rounded-2xl mb-8">
-                    <div class="loading-spinner"></div>
-                </div>
-                <h2 class="text-xl font-bold text-gray-800 mb-2">AI Interview Prep ✨</h2>
-                <div id="interview-prep-content" class="min-h-[100px] flex items-center justify-center p-6 bg-gray-50 rounded-2xl">
-                     <div class="loading-spinner"></div>
-                </div>
-                <button id="next-2" class="w-full mt-8 bg-blue-600 text-white font-semibold py-3 px-4 rounded-xl hover:bg-blue-700 transition-colors transform active:scale-95">
-                    Next
-                </button>
-            </div>
-
-            <!-- Step 3: LinkedIn Match -->
-            <div id="step-3" class="hidden transition-all duration-500 ease-in-out text-center">
-                <h2 class="text-3xl font-bold text-gray-800 mb-6">Is this your LinkedIn account?</h2>
-                <div class="bg-gray-50 rounded-2xl p-6 mb-8 flex flex-col items-center">
-                    <img src="https://placehold.co/100x100/4f46e5/ffffff?text=User" alt="User Profile Picture" class="w-24 h-24 rounded-full mb-4 ring-4 ring-blue-500 ring-opacity-50">
-                    <div class="space-y-2">
-                        <h3 class="text-xl font-semibold text-gray-800">Johnathan Doe</h3>
-                        <p class="text-sm text-gray-500">Sr. Product Manager at Tech Solutions Inc.</p>
+                        <h2 class="text-3xl font-bold text-gray-800">Application Submitted!</h2>
+                        <p class="mt-2 text-gray-600">Thank you for your interest. Stay connected with us.</p>
+                    </div>
+                    <div class="mt-8 space-y-4">
+                        <label class="flex items-center p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition">
+                            <input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="ml-3 text-gray-700 font-medium">Join our talent community for future opportunities.</span>
+                        </label>
+                        <label class="flex items-center p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition">
+                            <input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked>
+                            <span class="ml-3 text-gray-700 font-medium">Notify me about similar jobs.</span>
+                        </label>
+                        <label class="flex items-center p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition">
+                            <input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="ml-3 text-gray-700 font-medium">Let me know about upcoming recruiting events.</span>
+                        </label>
+                    </div>
+                    <div class="mt-8">
+                        <button onclick="finishApplication()" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 transition duration-300">Finish</button>
                     </div>
                 </div>
-                <div class="space-y-4">
-                    <button id="next-3-yes" class="w-full bg-green-600 text-white font-semibold py-3 px-4 rounded-xl hover:bg-green-700 transition-colors transform active:scale-95">
-                        Yes, that's me
-                    </button>
-                    <button id="next-3-no" class="w-full bg-gray-200 text-gray-800 font-semibold py-3 px-4 rounded-xl hover:bg-gray-300 transition-colors transform active:scale-95">
-                        Enter your LinkedIn URL
-                    </button>
-                    <input id="linkedin-url-input" type="text" placeholder="https://linkedin.com/in/..." class="hidden w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-            </div>
-
-            <!-- Step 4: Mandatory Questions -->
-            <div id="step-4" class="hidden transition-all duration-500 ease-in-out">
-                <h2 class="text-3xl font-bold text-gray-800 mb-4">You were spot on, this is a great match for you.</h2>
-                <p class="text-lg text-gray-600 mb-8">Before we continue, we need to ask a few mandatory questions.</p>
                 
-                <div class="space-y-6">
-                    <div>
-                        <p class="text-base font-medium text-gray-700 mb-2">Are you a veteran?</p>
-                        <div class="flex items-center space-x-4">
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="veteran" value="yes" class="form-radio text-blue-600 focus:ring-blue-500">
-                                <span class="ml-2 text-gray-700">Yes</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="veteran" value="no" class="form-radio text-blue-600 focus:ring-blue-500">
-                                <span class="ml-2 text-gray-700">No</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div>
-                        <p class="text-base font-medium text-gray-700 mb-2">Are you a protected individual?</p>
-                        <div class="flex items-center space-x-4">
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="protected" value="yes" class="form-radio text-blue-600 focus:ring-blue-500">
-                                <span class="ml-2 text-gray-700">Yes</span>
-                            </label>
-                            <label class="inline-flex items-center">
-                                <input type="radio" name="protected" value="no" class="form-radio text-blue-600 focus:ring-blue-500">
-                                <span class="ml-2 text-gray-700">No</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                <button id="next-4" class="w-full mt-8 bg-blue-600 text-white font-semibold py-3 px-4 rounded-xl hover:bg-blue-700 transition-colors transform active:scale-95">
-                    Done
-                </button>
-            </div>
-
-            <!-- Step 5: Benefits, Reviews, Articles and Final Submit -->
-            <div id="step-5" class="hidden transition-all duration-500 ease-in-out">
-                <h2 class="text-3xl font-bold text-gray-800 mb-4">We value our employees by having the best benefits. Check it out.</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <!-- Benefits Card -->
-                    <div class="bg-gray-50 rounded-2xl p-6 shadow-sm">
-                        <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                            <svg class="w-6 h-6 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c1.657 0 3 1.343 3 3v2a3 3 0 003 3h-1a3 3 0 01-3-3v-2a3 3 0 013-3h1zM4 12a8 8 0 1016 0A8 8 0 004 12z"></path></svg>
-                            Benefits
-                        </h3>
-                        <ul class="text-gray-600 space-y-2 text-sm">
-                            <li><span class="font-medium text-gray-700">Health & Wellness:</span> Medical, dental, vision insurance</li>
-                            <li><span class="font-medium text-gray-700">Financial:</span> 401(k) with company match, stock options</li>
-                            <li><span class="font-medium text-gray-700">Work-Life:</span> Unlimited PTO, flexible hours</li>
-                        </ul>
-                    </div>
-
-                    <!-- Glassdoor Card -->
-                    <div class="bg-gray-50 rounded-2xl p-6 shadow-sm">
-                        <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                            <svg class="w-6 h-6 text-green-600 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zM12 18.5c-3.59 0-6.5-2.91-6.5-6.5s2.91-6.5 6.5-6.5 6.5 2.91 6.5 6.5-2.91 6.5-6.5 6.5z"></path></svg>
-                            Glassdoor Reviews
-                        </h3>
-                        <div class="flex items-center mb-2">
-                            <span class="text-yellow-400 text-2xl">★★★★☆</span>
-                            <span class="ml-2 text-sm text-gray-600">4.1 out of 5 stars</span>
-                        </div>
-                        <p class="text-sm text-gray-700 italic">"Great company culture and fantastic work-life balance. Leadership is very supportive."</p>
-                    </div>
-
-                    <!-- Articles Card -->
-                    <div class="bg-gray-50 rounded-2xl p-6 shadow-sm">
-                        <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                            <svg class="w-6 h-6 text-purple-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20v-7a3 3 0 00-3-3H8a3 3 0 00-3 3v7"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 16h.01M16 16h.01M8 16h.01"></path></svg>
-                            Company News
-                        </h3>
-                        <ul class="text-gray-600 space-y-2 text-sm">
-                            <li><a href="#" class="text-blue-600 hover:underline">Our new product launch is a huge success!</a></li>
-                            <li><a href="#" class="text-blue-600 hover:underline">Expanding our team with new offices in Austin.</a></li>
-                            <li><a href="#" class="text-blue-600 hover:underline">Named a 'Best Place to Work' for 3rd year in a row.</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <button id="next-5" class="w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-xl hover:bg-blue-700 transition-colors transform active:scale-95">
-                    Submit My Application
-                </button>
-            </div>
-
-            <!-- Step 6: Final Opt-ins -->
-            <div id="step-6" class="hidden transition-all duration-500 ease-in-out">
-                <h2 class="text-3xl font-bold text-gray-800 mb-4">You're all set!</h2>
-                <p class="text-lg text-gray-600 mb-8">Thank you for your application. You're one step closer to joining our team.</p>
-                <p class="font-medium text-gray-800 mb-4">Stay connected with us for future opportunities:</p>
-                
-                <div class="space-y-4 mb-8">
-                    <label class="flex items-center text-gray-700">
-                        <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 rounded-lg">
-                        <span class="ml-2">Sign up for the Talent Community</span>
-                    </label>
-                    <label class="flex items-center text-gray-700">
-                        <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 rounded-lg">
-                        <span class="ml-2">Get emails for similar jobs</span>
-                    </label>
-                    <label class="flex items-center text-gray-700">
-                        <input type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 rounded-lg">
-                        <span class="ml-2">Learn about upcoming events</span>
-                    </label>
-                </div>
-                <button id="next-6" class="w-full bg-gray-200 text-gray-800 font-semibold py-3 px-4 rounded-xl hover:bg-gray-300 transition-colors transform active:scale-95">
-                    Finish
-                </button>
-            </div>
-
-            <!-- Message Box for Alerts -->
-            <div id="message-box" class="fixed inset-0 hidden items-center justify-center bg-black bg-opacity-50 z-50">
-                <div class="bg-white rounded-lg p-6 max-w-sm mx-auto shadow-lg text-center">
-                    <p id="message-text" class="text-lg font-medium text-gray-800 mb-4"></p>
-                    <button id="close-message" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Close</button>
+                <!-- Step 6: Confirmation -->
+                <div id="step-6" class="wizard-step hidden text-center">
+                     <h2 class="text-3xl font-bold text-gray-800 fade-in">You're all set!</h2>
+                     <p class="mt-3 text-gray-600 fade-in" style="animation-delay: 0.2s;">We'll be in touch soon. Best of luck!</p>
                 </div>
             </div>
-
         </div>
     </div>
+
 
     <script>
-        // Get all the step elements
-        const step1 = document.getElementById('step-1');
-        const step2 = document.getElementById('step-2');
-        const step3 = document.getElementById('step-3');
-        const step4 = document.getElementById('step-4');
-        const step5 = document.getElementById('step-5');
-        const step6 = document.getElementById('step-6');
-
-        // Get the containers
-        const jobDescriptionContainer = document.getElementById('job-description-container');
-        const wizardOverlay = document.getElementById('wizard-overlay');
-        const geminiContentDiv = document.getElementById('gemini-content');
-        const interviewPrepContentDiv = document.getElementById('interview-prep-content');
-
-        // Get all the next/submit buttons
-        const showWizardBtn = document.getElementById('show-wizard-btn');
+        let currentStep = 1;
+        const steps = Array.from(document.querySelectorAll('.wizard-step'));
+        const wizardModal = document.getElementById('wizard-modal');
+        const openWizardBtn = document.getElementById('open-wizard-btn');
         const closeWizardBtn = document.getElementById('close-wizard-btn');
-        const next1Btn = document.getElementById('next-1');
-        const next2Btn = document.getElementById('next-2');
-        const next3YesBtn = document.getElementById('next-3-yes');
-        const next3NoBtn = document.getElementById('next-3-no');
-        const next4Btn = document.getElementById('next-4');
-        const next5Btn = document.getElementById('next-5');
-        const next6Btn = document.getElementById('next-6');
-        const linkedinInput = document.getElementById('linkedin-url-input');
-
-        // Message box elements
-        const messageBox = document.getElementById('message-box');
-        const messageText = document.getElementById('message-text');
-        const closeMessageBtn = document.getElementById('close-message');
-
-        const jobDescription = document.getElementById('job-description-text').textContent.trim();
-        const resumeContent = `
-            Johnathan Doe
-            Sr. Product Manager
-            Summary: Highly skilled product manager with over 7 years of experience in the tech industry. Proven ability to lead cross-functional teams, define product roadmaps, and drive successful product launches. Expertise in agile methodologies and a deep understanding of user-centric design.
-            Experience:
-            - Sr. Product Manager, Tech Solutions Inc. (2018 - Present)
-                - Managed the entire product lifecycle for a suite of enterprise software.
-                - Grew user engagement by 20% through feature prioritization and A/B testing.
-            - Product Manager, Innovate Corp (2015 - 2018)
-                - Led a team of engineers and designers to launch a new mobile application.
-                - Conducted extensive market research to inform product strategy.
-            Skills: Product Management, Agile, User Experience (UX), A/B Testing, Market Research, Leadership, Data Analysis.
-        `;
-
-        async function callGeminiAPI(systemPrompt, userQuery, targetElementId) {
-            const targetElement = document.getElementById(targetElementId);
-            targetElement.innerHTML = `<div class="loading-spinner"></div>`;
-
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                systemInstruction: {
-                    parts: [{ text: systemPrompt }]
-                },
-            };
-
-            const apiKey = ""
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-
-            try {
-                let response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const result = await response.json();
-                const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-                if (text) {
-                    targetElement.innerHTML = `<p class="text-sm text-gray-700 leading-relaxed">${text.replace(/\n/g, '<br>')}</p>`;
-                } else {
-                    targetElement.innerHTML = `<p class="text-sm text-red-500">Error: Could not generate content.</p>`;
-                }
-            } catch (error) {
-                targetElement.innerHTML = `<p class="text-sm text-red-500">Error: API call failed.</p>`;
-                console.error('API call failed:', error);
-            }
+        
+        // --- Modal Control ---
+        function openWizard() {
+            wizardModal.classList.remove('hidden');
+            wizardModal.classList.add('modal-enter', 'modal-enter-active');
+            wizardModal.querySelector('div').classList.add('modal-content-enter', 'modal-content-enter-active');
+            setTimeout(() => {
+                wizardModal.classList.remove('modal-enter', 'modal-enter-active');
+                wizardModal.querySelector('div').classList.remove('modal-content-enter', 'modal-content-enter-active');
+            }, 300);
         }
 
-        function showStep(stepToShow) {
-            const allSteps = [step1, step2, step3, step4, step5, step6];
-            allSteps.forEach(step => step.classList.add('hidden'));
-            stepToShow.classList.remove('hidden');
+        function closeWizard() {
+            wizardModal.classList.add('modal-leave', 'modal-leave-active');
+            wizardModal.querySelector('div').classList.add('modal-content-leave', 'modal-content-leave-active');
+            setTimeout(() => {
+                wizardModal.classList.add('hidden');
+                wizardModal.classList.remove('modal-leave', 'modal-leave-active');
+                wizardModal.querySelector('div').classList.remove('modal-content-leave', 'modal-content-leave-active');
+                 // Reset to step 1 when closing
+                currentStep = 1;
+                showCurrentStep();
+            }, 300);
         }
 
-        function showMessage(text) {
-            messageText.textContent = text;
-            messageBox.classList.remove('hidden');
-            messageBox.classList.add('flex');
-        }
-
-        function showWizard() {
-            jobDescriptionContainer.classList.add('hidden');
-            wizardOverlay.classList.remove('hidden');
-            wizardOverlay.classList.add('flex');
-            showStep(step1);
-        }
-
-        function hideWizard() {
-            wizardOverlay.classList.add('hidden');
-            jobDescriptionContainer.classList.remove('hidden');
-        }
-
-        closeMessageBtn.addEventListener('click', () => {
-            messageBox.classList.add('hidden');
-        });
-
-        closeWizardBtn.addEventListener('click', () => {
-            hideWizard();
-        });
-
-        showWizardBtn.addEventListener('click', () => {
-            showWizard();
-        });
-
-        // Step 1 event listener
-        next1Btn.addEventListener('click', () => {
-            const resumeFile = document.getElementById('resume-upload').files[0];
-            if (!resumeFile) {
-                showMessage('Please upload a resume to proceed.');
-            } else {
-                showStep(step2);
-
-                // Call Gemini API for Compatibility Analysis
-                const compatibilityPrompt = `Act as a senior technical recruiter. Analyze the following resume against the provided job description. Give a compatibility score out of 100, then briefly highlight 3 key strengths from the resume that match the job description.
-Job Description:
-${jobDescription}
-Resume:
-${resumeContent}`;
-                callGeminiAPI(compatibilityPrompt, '', 'gemini-content');
-
-                // Call Gemini API for Interview Prep
-                const interviewPrompt = `Act as an expert career coach. Based on the following job description and resume, generate 3 specific and insightful interview questions that a hiring manager would likely ask. Format the questions as a numbered list.
-Job Description:
-${jobDescription}
-Resume:
-${resumeContent}`;
-                callGeminiAPI(interviewPrompt, '', 'interview-prep-content');
+        openWizardBtn.addEventListener('click', openWizard);
+        closeWizardBtn.addEventListener('click', closeWizard);
+        // Also close if clicking the background overlay
+        wizardModal.addEventListener('click', (e) => {
+            if (e.target === wizardModal) {
+                closeWizard();
             }
         });
 
-        // Step 2 event listener
-        next2Btn.addEventListener('click', () => {
-            showStep(step3);
-        });
 
-        // Step 3 event listeners
-        next3YesBtn.addEventListener('click', () => {
-            showStep(step4);
-        });
-
-        next3NoBtn.addEventListener('click', () => {
-            linkedinInput.classList.remove('hidden');
-            linkedinInput.focus();
-            next3NoBtn.textContent = 'Continue';
-            next3NoBtn.removeEventListener('click', arguments.callee);
-            next3NoBtn.addEventListener('click', () => {
-                if (linkedinInput.value.trim() === '') {
-                    showMessage('Please enter your LinkedIn URL.');
+        // --- Wizard Step Logic ---
+        function showCurrentStep() {
+            // Find the parent for correct positioning
+            const parent = steps[0].parentElement;
+            steps.forEach((step, index) => {
+                const stepId = parseInt(step.id.split('-')[1]);
+                if (stepId === currentStep) {
+                    step.classList.remove('hidden');
+                    step.classList.add('fade-in');
+                    parent.style.minHeight = `${step.offsetHeight}px`; // Adjust height for smooth transition
                 } else {
-                    showStep(step4);
+                    step.classList.add('hidden');
+                    step.classList.remove('fade-in');
                 }
             });
-        });
+        }
+        
+        function goToStep(stepNumber) {
+            currentStep = stepNumber;
+            showCurrentStep();
+        }
 
-        // Step 4 event listener
-        next4Btn.addEventListener('click', () => {
-            const veteranAnswer = document.querySelector('input[name="veteran"]:checked');
-            const protectedAnswer = document.querySelector('input[name="protected"]:checked');
-            if (!veteranAnswer || !protectedAnswer) {
-                showMessage('Please answer all mandatory questions to proceed.');
+        function finishApplication() {
+            goToStep(6);
+            setTimeout(closeWizard, 2000);
+        }
+        
+        // Populate the other steps that were collapsed for brevity
+        function populateSteps() {
+            document.getElementById('step-2').innerHTML = `
+                <div class="text-center">
+                    <img src="https://placehold.co/80x80/E0E7FF/4F46E5?text=JS" alt="Jane Smith" class="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-white shadow-lg">
+                    <h2 class="text-2xl font-bold text-gray-800">Is this your LinkedIn profile?</h2>
+                    <div class="mt-4 bg-gray-50 p-4 rounded-lg border">
+                        <p class="font-semibold text-lg text-gray-900">Jane Smith</p>
+                        <p class="text-gray-600">Senior Product Manager at Tech Solutions Inc.</p>
+                    </div>
+                </div>
+                <div class="mt-8 flex flex-col sm:flex-row gap-4">
+                    <button onclick="goToStep(3)" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 transition duration-300">Yes, that's me</button>
+                    <button onclick="document.getElementById('linkedin-manual').classList.toggle('hidden');" class="w-full bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-lg hover:bg-gray-300 transition duration-300">No, I'll enter it</button>
+                </div>
+                <div id="linkedin-manual" class="mt-6 hidden">
+                    <label for="linkedin-url" class="block text-sm font-medium text-gray-700">Your LinkedIn Profile URL</label>
+                    <input type="text" name="linkedin-url" id="linkedin-url" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="https://linkedin.com/in/yourprofile">
+                    <button onclick="goToStep(3)" class="mt-4 w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 transition duration-300">Continue</button>
+                </div>
+            `;
+            document.getElementById('step-3').innerHTML = `
+                <div class="text-center">
+                    <h2 class="text-2xl font-bold text-gray-800">You're a great match!</h2>
+                    <p class="mt-2 text-gray-600">Just a couple of mandatory questions before we proceed.</p>
+                </div>
+                <div class="mt-8 space-y-6">
+                    <div>
+                        <p class="font-medium text-gray-800">Are you a protected veteran?</p>
+                        <div class="mt-2 flex gap-4 custom-radio">
+                            <input type="radio" id="vet-yes" name="veteran" value="yes"><label for="vet-yes">Yes</label>
+                            <input type="radio" id="vet-no" name="veteran" value="no" checked><label for="vet-no">No</label>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-800">Do you have a disability?</p>
+                         <div class="mt-2 flex gap-4 custom-radio">
+                            <input type="radio" id="dis-yes" name="disability" value="yes"><label for="dis-yes">Yes</label>
+                            <input type="radio" id="dis-no" name="disability" value="no" checked><label for="dis-no">No</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8">
+                    <button onclick="goToStep(4)" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 transition duration-300">Done</button>
+                </div>
+            `;
+            document.getElementById('step-4').innerHTML = `
+                <div class="text-center">
+                    <h2 class="text-2xl font-bold text-gray-800">We value our employees. Check it out.</h2>
+                    <p class="mt-2 text-gray-600">Here's a little more about us while you're here.</p>
+                </div>
+                <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-indigo-50 p-6 rounded-lg text-center border border-indigo-200">
+                        <svg class="w-10 h-10 text-indigo-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                        <h3 class="font-semibold text-gray-800">Our Benefits</h3>
+                        <p class="text-sm text-gray-600 mt-1">Comprehensive health, dental, and vision plans.</p>
+                    </div>
+                    <div class="bg-green-50 p-6 rounded-lg text-center border border-green-200">
+                        <svg class="w-10 h-10 text-green-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+                        <h3 class="font-semibold text-gray-800">Glassdoor Reviews</h3>
+                        <p class="text-sm text-gray-600 mt-1">4.8 stars from 200+ employee reviews.</p>
+                    </div>
+                    <div class="bg-blue-50 p-6 rounded-lg text-center border border-blue-200">
+                        <svg class="w-10 h-10 text-blue-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3h2m-4 3h2M5 10h14M5 14h14M5 18h14"></path></svg>
+                        <h3 class="font-semibold text-gray-800">Company News</h3>
+                        <p class="text-sm text-gray-600 mt-1">Read about our latest product launch and community work.</p>
+                    </div>
+                </div>
+                <div class="mt-10">
+                    <button onclick="goToStep(5)" class="w-full bg-green-500 text-white font-bold py-4 px-4 rounded-lg hover:bg-green-600 transition duration-300 text-lg">
+                        Submit My Application
+                    </button>
+                </div>
+            `;
+        }
+
+
+        // --- Step 1 Logic ---
+        const resumeFileInput = document.getElementById('resume-file');
+        const submitResumeBtn = document.getElementById('submit-resume-btn');
+        const fileUploadName = document.getElementById('file-upload-name');
+
+        resumeFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                const fileName = e.target.files[0].name;
+                fileUploadName.textContent = `Selected: ${fileName}`;
+                submitResumeBtn.disabled = false;
             } else {
-                showStep(step5);
+                fileUploadName.textContent = '';
+                submitResumeBtn.disabled = true;
             }
         });
 
-        // Step 5 event listener
-        next5Btn.addEventListener('click', () => {
-            showStep(step6);
+        submitResumeBtn.addEventListener('click', () => {
+            submitResumeBtn.textContent = 'Processing...';
+            submitResumeBtn.disabled = true;
+            setTimeout(() => {
+                goToStep(2);
+                submitResumeBtn.textContent = "Let's Go";
+            }, 1500);
         });
+        
+        // --- Initialize ---
+        populateSteps();
+        showCurrentStep();
 
-        // Step 6 event listener (final step)
-        next6Btn.addEventListener('click', () => {
-            showMessage('Application submitted successfully!');
-            hideWizard();
+        // Automatically open the wizard on page load to greet the user
+        window.addEventListener('load', () => {
+            // A small delay makes the experience feel less abrupt
+            setTimeout(openWizard, 500);
         });
-
-        // Initialize with the first step
-        showWizard();
     </script>
 </body>
 </html>
+
